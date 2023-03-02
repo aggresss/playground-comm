@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -20,7 +21,7 @@ const (
 	NEXTPROTO = "quic-echo-example"
 )
 
-const message = "foobar"
+const message = "foobar\n"
 
 func main() {
 	quicServer, err := net.ResolveTCPAddr(TYPE, HOST+":"+PORT)
@@ -47,25 +48,36 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Client: Sending '%s'\n", message)
-	_, err = stream.Write([]byte(message))
-	if err != nil {
-		fmt.Println("stream write failed:", err.Error())
-		os.Exit(1)
-	}
-
-	buf := make([]byte, len(message))
-	_, err = io.ReadFull(stream, buf)
-	if err != nil {
-		fmt.Println("stream read failed:", err.Error())
-		os.Exit(1)
-	}
-	fmt.Printf("Client: Got '%s'\n", buf)
-
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-	select {
-	case s := <-ch:
-		fmt.Println(s.String())
+
+	readerStream := bufio.NewReader(stream)
+	readerStdin := bufio.NewReader(os.Stdin)
+
+	for {
+		select {
+		case s := <-ch:
+			stream.Close()
+			conn.CloseWithError(quic.ApplicationErrorCode(quic.NoError), "")
+			fmt.Println(s)
+			os.Exit(0)
+		default:
+			text, _ := readerStdin.ReadString('\n')
+			_, err = stream.Write([]byte(text))
+			if err != nil {
+				fmt.Println("Write data failed:", err.Error())
+				os.Exit(1)
+			}
+			fmt.Printf("send: %s", text)
+
+			bytes, err := readerStream.ReadBytes(byte('\n'))
+			if err != nil {
+				if err != io.EOF {
+					fmt.Println("failed to read data, err:", err)
+				}
+				os.Exit(1)
+			}
+			fmt.Printf("receive: %s", bytes)
+		}
 	}
 }

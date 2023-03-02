@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -40,24 +41,42 @@ func main() {
 			fmt.Println("failed to accept connection, err:", err)
 			continue
 		}
+		fmt.Printf("accept new connection, remote: %s\n", conn.RemoteAddr().String())
 
 		go handleConnection(conn)
 	}
 }
 
 func handleConnection(conn quic.Connection) {
-	stream, err := conn.AcceptStream(context.Background())
-	if err != nil {
-		panic(err)
+	defer conn.CloseWithError(quic.ApplicationErrorCode(quic.NoError), "")
+
+	for {
+		stream, err := conn.AcceptStream(context.Background())
+		if err != nil {
+			fmt.Println("failed to accept stream, err:", err)
+			return
+		}
+		fmt.Printf("accept new stream, remote: %s, streamID: %x\n", conn.RemoteAddr().String(), stream.StreamID())
+
+		go handleStream(stream)
 	}
-	// Echo through the loggingWriter
-	_, err = io.Copy(loggingWriter{stream}, stream)
 }
 
-// A wrapper for io.Writer that also logs the message.
-type loggingWriter struct{ io.Writer }
+func handleStream(stream quic.Stream) {
+	defer stream.Close()
+	reader := bufio.NewReader(stream)
+	for {
+		bytes, err := reader.ReadBytes(byte('\n'))
+		if err != nil {
+			if err != io.EOF {
+				fmt.Println("failed to read data, err:", err)
+			}
+			return
+		}
+		fmt.Printf("request: %s", bytes)
 
-func (w loggingWriter) Write(b []byte) (int, error) {
-	fmt.Printf("Server: Got '%s'\n", string(b))
-	return w.Writer.Write(b)
+		stream.Write(bytes)
+		fmt.Printf("response: %s", bytes)
+	}
+
 }
