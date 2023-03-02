@@ -38,6 +38,7 @@ func main() {
 }
 
 func handleConnection(conn net.Conn) {
+	fmt.Printf("accept new connection, remote: %s\n", conn.RemoteAddr().String())
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 	for {

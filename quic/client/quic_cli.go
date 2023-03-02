@@ -35,9 +35,9 @@ func main() {
 		NextProtos:         []string{NEXTPROTO},
 	}
 
-	quicConfig := quic.Config{}
+	quicConfig := &quic.Config{}
 
-	conn, err := quic.DialAddr(quicServer.String(), tlsConf, &quicConfig)
+	conn, err := quic.DialAddr(quicServer.String(), tlsConf, quicConfig)
 	if err != nil {
 		fmt.Println("Dial failed:", err.Error())
 		os.Exit(1)

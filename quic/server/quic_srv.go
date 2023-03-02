@@ -24,9 +24,9 @@ func main() {
 	}
 	tlsConfig.NextProtos = []string{NEXTPROTO}
 
-	quicConfig := quic.Config{}
+	quicConfig := &quic.Config{}
 
-	listener, err := quic.ListenAddr(ADDR, tlsConfig, &quicConfig)
+	listener, err := quic.ListenAddr(ADDR, tlsConfig, quicConfig)
 	if err != nil {
 		fmt.Println("failed to create listener, err:", err)
 		return
@@ -41,15 +41,14 @@ func main() {
 			fmt.Println("failed to accept connection, err:", err)
 			continue
 		}
-		fmt.Printf("accept new connection, remote: %s\n", conn.RemoteAddr().String())
 
 		go handleConnection(conn)
 	}
 }
 
 func handleConnection(conn quic.Connection) {
+	fmt.Printf("accept new connection, remote: %s\n", conn.RemoteAddr().String())
 	defer conn.CloseWithError(quic.ApplicationErrorCode(quic.NoError), "")
-
 	for {
 		stream, err := conn.AcceptStream(context.Background())
 		if err != nil {
