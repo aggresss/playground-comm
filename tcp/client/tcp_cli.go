@@ -16,7 +16,6 @@ const (
 
 func main() {
 	tcpServer, err := net.ResolveTCPAddr(TYPE, HOST+":"+PORT)
-
 	if err != nil {
 		fmt.Println("ResolveTCPAddr failed:", err.Error())
 		os.Exit(1)

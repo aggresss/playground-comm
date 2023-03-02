@@ -1,36 +1,58 @@
-package cli
+package main
 
 import (
+	"bufio"
 	"crypto/tls"
-	"log"
+	"fmt"
+	"io"
+	"net"
+	"os"
+)
+
+const (
+	HOST = "localhost"
+	PORT = "5059"
+	TYPE = "tcp"
 )
 
 func main() {
-	log.SetFlags(log.Lshortfile)
+	tlsServer, err := net.ResolveTCPAddr(TYPE, HOST+":"+PORT)
+	if err != nil {
+		fmt.Println("ResolveTCPAddr failed:", err.Error())
+		os.Exit(1)
+	}
 
 	conf := &tls.Config{
 		InsecureSkipVerify: true,
 	}
 
-	conn, err := tls.Dial("tcp", "127.0.0.1:443", conf)
+	conn, err := tls.Dial(TYPE, tlsServer.String(), conf)
 	if err != nil {
-		log.Println(err)
-		return
+		fmt.Println("Dial failed:", err.Error())
+		os.Exit(1)
 	}
+
 	defer conn.Close()
 
-	n, err := conn.Write([]byte("hello\n"))
-	if err != nil {
-		log.Println(n, err)
-		return
-	}
+	readerConn := bufio.NewReader(conn)
+	readerStdin := bufio.NewReader(os.Stdin)
 
-	buf := make([]byte, 100)
-	n, err = conn.Read(buf)
-	if err != nil {
-		log.Println(n, err)
-		return
-	}
+	for {
+		text, _ := readerStdin.ReadString('\n')
+		_, err = conn.Write([]byte(text))
+		if err != nil {
+			fmt.Println("Write data failed:", err.Error())
+			os.Exit(1)
+		}
+		fmt.Printf("send: %s", text)
 
-	println(string(buf[:n]))
+		bytes, err := readerConn.ReadBytes(byte('\n'))
+		if err != nil {
+			if err != io.EOF {
+				fmt.Println("failed to read data, err:", err)
+			}
+			os.Exit(1)
+		}
+		fmt.Printf("receive: %s", bytes)
+	}
 }

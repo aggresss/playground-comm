@@ -1,9 +1,10 @@
-package srv
+package main
 
 import (
 	"bufio"
 	"crypto/tls"
-	"log"
+	"fmt"
+	"io"
 	"net"
 	"time"
 
@@ -11,46 +12,45 @@ import (
 )
 
 func main() {
-	log.SetFlags(log.Lshortfile)
-
 	config, err := utils.GetTLSConf(time.Now(), time.Now().Add(10*24*time.Hour))
 	if err != nil {
 		return
 	}
 
-	ln, err := tls.Listen("tcp", ":443", config)
+	listener, err := tls.Listen("tcp", ":5059", config)
 	if err != nil {
-		log.Println(err)
+		fmt.Println("failed to create listener, err:", err)
 		return
 	}
-	defer ln.Close()
 
+	defer listener.Close()
+
+	fmt.Printf("listening on %s\n", listener.Addr())
 	for {
-		conn, err := ln.Accept()
+		conn, err := listener.Accept()
 		if err != nil {
-			log.Println(err)
+			fmt.Println("failed to accept connection, err:", err)
 			continue
 		}
+
 		go handleConnection(conn)
 	}
 }
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
-	r := bufio.NewReader(conn)
+	reader := bufio.NewReader(conn)
 	for {
-		msg, err := r.ReadString('\n')
+		bytes, err := reader.ReadBytes(byte('\n'))
 		if err != nil {
-			log.Println(err)
+			if err != io.EOF {
+				fmt.Println("failed to read data, err:", err)
+			}
 			return
 		}
+		fmt.Printf("request: %s", bytes)
 
-		println(msg)
-
-		n, err := conn.Write([]byte("world\n"))
-		if err != nil {
-			log.Println(n, err)
-			return
-		}
+		conn.Write(bytes)
+		fmt.Printf("response: %s", bytes)
 	}
 }

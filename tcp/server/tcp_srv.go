@@ -9,15 +9,15 @@ import (
 )
 
 func main() {
-	port := fmt.Sprintf(":5059")
-
-	listener, err := net.Listen("tcp", port)
+	listener, err := net.Listen("tcp", ":5059")
 	if err != nil {
 		fmt.Println("failed to create listener, err:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("listening on %s\n", listener.Addr())
 
+	defer listener.Close()
+
+	fmt.Printf("listening on %s\n", listener.Addr())
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
