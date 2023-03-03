@@ -14,7 +14,6 @@ func main() {
 		fmt.Println("failed to create listener, err:", err)
 		os.Exit(1)
 	}
-
 	defer listener.Close()
 
 	fmt.Printf("listening on %s\n", listener.Addr())

@@ -26,7 +26,6 @@ func main() {
 		fmt.Println("Dial failed:", err.Error())
 		os.Exit(1)
 	}
-
 	defer conn.Close()
 
 	readerConn := bufio.NewReader(conn)

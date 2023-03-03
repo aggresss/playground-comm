@@ -31,7 +31,6 @@ func main() {
 		fmt.Println("failed to create listener, err:", err)
 		return
 	}
-
 	defer listener.Close()
 
 	fmt.Printf("listening on %s\n", listener.Addr())
@@ -77,5 +76,4 @@ func handleStream(stream quic.Stream) {
 		stream.Write(bytes)
 		fmt.Printf("response: %s", bytes)
 	}
-
 }
