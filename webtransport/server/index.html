@@ -48,12 +48,16 @@
     </ul>
   </div>
   <script>
+    const sendButton = document.querySelector('#send');
+    const sendInput = document.querySelector('#data');
+    let currentTransport;
+
     window.onload = async () => {
       try {
         var transport = new WebTransport("https://localhost:5059/echo", {
           "serverCertificateHashes": [{
             "algorithm": "sha-256",
-            "value": new Uint8Array(%%CERTHASH%%)
+            "value": new Uint8Array(%% CERTHASH %%)
           }]
         });
         addToEventLog("Initiating connection...");
@@ -65,47 +69,31 @@
       try {
         await transport.ready;
         addToEventLog("Connection ready.");
+        sendButton.disabled = false;
       } catch (e) {
         addToEventLog("Connection failed. " + e, "error");
         return;
       }
 
+      currentTransport = transport;
     }
     async function sendData() {
-      let form = document.forms.sending.elements;
       let encoder = new TextEncoder("utf-8");
-      let rawData = sending.data.value;
+      let rawData = sendInput.value;
       let data = encoder.encode(rawData);
       let transport = currentTransport;
       try {
-        switch (form.sendtype.value) {
-          case "datagram":
-            await currentTransportDatagramWriter.write(data);
-            addToEventLog("Sent datagram: " + rawData);
-            break;
-          case "unidi": {
-            let stream = await transport.createUnidirectionalStream();
-            let writer = stream.getWriter();
-            await writer.write(data);
-            await writer.close();
-            addToEventLog("Sent a unidirectional stream with data: " + rawData);
-            break;
-          }
-          case "bidi": {
-            let stream = await transport.createBidirectionalStream();
-            let number = streamNumber++;
-            readFromIncomingStream(stream, number);
+        let stream = await transport.createBidirectionalStream();
+        let number = streamNumber++;
+        readFromIncomingStream(stream, number);
 
-            let writer = stream.writable.getWriter();
-            await writer.write(data);
-            await writer.close();
-            addToEventLog(
-              "Opened bidirectional stream #" + number +
-              " with data: " + rawData,
-            );
-            break;
-          }
-        }
+        let writer = stream.writable.getWriter();
+        await writer.write(data);
+        await writer.close();
+        addToEventLog(
+          "Opened bidirectional stream #" + number +
+          " with data: " + rawData,
+        );
       } catch (e) {
         addToEventLog("Error while sending data: " + e, "error");
       }
