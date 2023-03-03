@@ -45,7 +45,8 @@ func main() {
 
 	stream, err := conn.OpenStreamSync(context.Background())
 	if err != nil {
-		return
+		fmt.Println("OpenStreamSync failed:", err.Error())
+		os.Exit(1)
 	}
 
 	ch := make(chan os.Signal, 1)

@@ -28,9 +28,8 @@ async function establishSession(url) {
     return transport;
 }
 
-// In this test, we open 5 unidirectional streams, and send the data back to the server.
 async function runUnidirectionalTest() {
-    const transport = await establishSession('https://127.0.0.1:12345/unidirectional');
+    const transport = await establishSession('https://localhost:5059/echo');
     const data = new Uint8Array(%%DATA%%);
 
     let failed = false

@@ -27,12 +27,12 @@ var indexHTML string
 
 func runHTTPServer(certHash [32]byte) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/webtransport", func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		fmt.Println("handler hit")
 		content := strings.ReplaceAll(indexHTML, "%%CERTHASH%%", formatByteSlice(certHash[:]))
 		w.Write([]byte(content))
 	})
-	http.ListenAndServe("localhost:8080", mux)
+	http.ListenAndServe(":8080", mux)
 }
 
 func formatByteSlice(b []byte) string {
@@ -74,6 +74,7 @@ func main() {
 			log.Fatalf("failed to accept directional stream: %v", err)
 		}
 		defer stream.Close()
+		fmt.Printf("accept new stream, remote: %s, streamID: %x\n", conn.RemoteAddr().String(), stream.StreamID())
 
 		reader := bufio.NewReader(stream)
 		for {
@@ -90,6 +91,7 @@ func main() {
 			fmt.Printf("response: %s", bytes)
 		}
 	})
+	fmt.Printf("listening on %s\n", s.H3.Addr)
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
