@@ -1,62 +1,132 @@
+<!DOCTYPE html>
 <html>
-<body>
-<script>
-function testSucceeded() {
-    let elemDiv = document.createElement('div');
-    elemDiv.id = "done";
-    document.body.appendChild(elemDiv);
-}
 
-async function establishSession(url) {
-    const transport = new WebTransport(url, {
-        "serverCertificateHashes": [{
+<head>
+  <meta charset="UTF-8">
+  <title>Hello, World!</title>
+  <style type="text/css">
+    textarea {
+      height: 3em;
+      width: 100%;
+    }
+
+    #send {
+      margin-top: 0.5em;
+      width: 15em;
+    }
+
+    .input-line {
+      display: flex;
+    }
+
+    #event-log {
+      border: 1px dotted black;
+      font-family: monospace;
+      height: 12em;
+      overflow: scroll;
+      padding-bottom: 1em;
+      padding-top: 1em;
+    }
+
+    .log-error {
+      color: darkred;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <h2>Send data over WebTransport</h2>
+    <form name="sending">
+      <textarea name="data" id="data">hello</textarea>
+      <input type="button" id="send" name="send" value="Send data" disabled onclick="sendData()">
+    </form>
+  </div>
+  <div>
+    <h2>Event log</h2>
+    <ul id="event-log">
+    </ul>
+  </div>
+  <script>
+    window.onload = async () => {
+      try {
+        var transport = new WebTransport("https://localhost:5059/echo", {
+          "serverCertificateHashes": [{
             "algorithm": "sha-256",
             "value": new Uint8Array(%%CERTHASH%%)
-        }]
-    });
+          }]
+        });
+        addToEventLog("Initiating connection...");
+      } catch (e) {
+        addToEventLog("Failed to create connection object. " + e, "error");
+        return;
+      }
 
-    // Optionally, set up functions to respond to
-    // the connection closing:
-    transport.closed.then(() => {
-        console.log(`The HTTP/3 connection to ${url} closed gracefully.`);
-    }).catch((error) => {
-        console.error(`The HTTP/3 connection to ${url} closed due to ${error}.`);
-    });
+      try {
+        await transport.ready;
+        addToEventLog("Connection ready.");
+      } catch (e) {
+        addToEventLog("Connection failed. " + e, "error");
+        return;
+      }
 
-    // Once .ready fulfills, the connection can be used.
-    await transport.ready;
-    return transport;
-}
-
-async function runUnidirectionalTest() {
-    const transport = await establishSession('https://localhost:5059/echo');
-    const data = new Uint8Array(%%DATA%%);
-
-    let failed = false
-    for(let i = 0; i < 5; i++) {
-        const stream = await transport.createUnidirectionalStream();
-        console.log(`Opened stream ${i}.`)
-        const writer = stream.getWriter();
-        writer.write(data);
-        try {
+    }
+    async function sendData() {
+      let form = document.forms.sending.elements;
+      let encoder = new TextEncoder("utf-8");
+      let rawData = sending.data.value;
+      let data = encoder.encode(rawData);
+      let transport = currentTransport;
+      try {
+        switch (form.sendtype.value) {
+          case "datagram":
+            await currentTransportDatagramWriter.write(data);
+            addToEventLog("Sent datagram: " + rawData);
+            break;
+          case "unidi": {
+            let stream = await transport.createUnidirectionalStream();
+            let writer = stream.getWriter();
+            await writer.write(data);
             await writer.close();
-            console.log(`All data has been sent on stream ${i}.`);
-        } catch (error) {
-            console.error(`An error occurred: ${error}`);
-            failed = true
-        }
-    }
-    if(!failed) { testSucceeded() }
-    transport.close()
-}
+            addToEventLog("Sent a unidirectional stream with data: " + rawData);
+            break;
+          }
+          case "bidi": {
+            let stream = await transport.createBidirectionalStream();
+            let number = streamNumber++;
+            readFromIncomingStream(stream, number);
 
-(async function() {
-    switch("%%TEST%%") {
-    case "unidirectional":
-        await runUnidirectionalTest()
-        break
+            let writer = stream.writable.getWriter();
+            await writer.write(data);
+            await writer.close();
+            addToEventLog(
+              "Opened bidirectional stream #" + number +
+              " with data: " + rawData,
+            );
+            break;
+          }
+        }
+      } catch (e) {
+        addToEventLog("Error while sending data: " + e, "error");
+      }
     }
-})()
-</script>
+
+    function addToEventLog(text, severity = "info") {
+      let log = document.getElementById("event-log");
+      let mostRecentEntry = log.lastElementChild;
+      let entry = document.createElement("li");
+      entry.innerText = text;
+      entry.className = "log-" + severity;
+      log.appendChild(entry);
+      if (
+        mostRecentEntry != null &&
+        mostRecentEntry.getBoundingClientRect().top <
+        log.getBoundingClientRect().bottom
+      ) {
+        log.scrollTop = log.scrollHeight;
+      }
+    }
+  </script>
 </body>
+
 </html>

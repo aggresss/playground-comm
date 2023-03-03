@@ -37,10 +37,13 @@ func main() {
 		},
 	}
 
-	_, conn, err := d.Dial(context.Background(), fmt.Sprintf("https://%s:%s/echo", HOST, PORT), nil)
-
+	resp, conn, err := d.Dial(context.Background(), fmt.Sprintf("https://%s:%s/echo", HOST, PORT), nil)
 	if err != nil {
 		fmt.Println("Dial failed:", err.Error())
+		os.Exit(1)
+	}
+	if resp.StatusCode != 200 {
+		fmt.Println("Dial response abnormal")
 		os.Exit(1)
 	}
 
