@@ -1,5 +1,0 @@
-package srv
-
-func main() {
-
-}

@@ -1,109 +1,61 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/tls"
-	"crypto/x509"
-	"flag"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"sync"
+	"net/url"
+	"time"
 
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
-	"github.com/quic-go/quic-go/internal/testdata"
-	"github.com/quic-go/quic-go/internal/utils"
-	"github.com/quic-go/quic-go/logging"
-	"github.com/quic-go/quic-go/qlog"
+)
+
+const (
+	HOST = "localhost"
+	PORT = "5059"
+	TYPE = "tcp"
 )
 
 func main() {
-	verbose := flag.Bool("v", false, "verbose")
-	quiet := flag.Bool("q", false, "don't print the data")
-	keyLogFile := flag.String("keylog", "", "key log file")
-	insecure := flag.Bool("insecure", false, "skip certificate verification")
-	enableQlog := flag.Bool("qlog", false, "output a qlog (in the same directory)")
-	flag.Parse()
-	urls := flag.Args()
-
-	logger := utils.DefaultLogger
-
-	if *verbose {
-		logger.SetLogLevel(utils.LogLevelDebug)
-	} else {
-		logger.SetLogLevel(utils.LogLevelInfo)
-	}
-	logger.SetLogTimeFormat("")
-
-	var keyLog io.Writer
-	if len(*keyLogFile) > 0 {
-		f, err := os.Create(*keyLogFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
-		keyLog = f
+	tlsConf := &tls.Config{
+		InsecureSkipVerify: true,
 	}
 
-	pool, err := x509.SystemCertPool()
+	quicConfig := &quic.Config{}
+
+	t := &http3.RoundTripper{
+		TLSClientConfig: tlsConf,
+		QuicConfig:      quicConfig,
+	}
+
+	defer t.Close()
+
+	client := http.Client{Transport: t, Timeout: 15 * time.Second}
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s", HOST+":"+PORT), bytes.NewBuffer([]byte("Hello, World!")))
 	if err != nil {
-		log.Fatal(err)
-	}
-	testdata.AddRootCA(pool)
-
-	var qconf quic.Config
-	if *enableQlog {
-		qconf.Tracer = qlog.NewTracer(func(_ logging.Perspective, connID []byte) io.WriteCloser {
-			filename := fmt.Sprintf("client_%x.qlog", connID)
-			f, err := os.Create(filename)
-			if err != nil {
-				log.Fatal(err)
-			}
-			log.Printf("Creating qlog file %s.\n", filename)
-			return utils.NewBufferedWriteCloser(bufio.NewWriter(f), f)
-		})
-	}
-	roundTripper := &http3.RoundTripper{
-		TLSClientConfig: &tls.Config{
-			RootCAs:            pool,
-			InsecureSkipVerify: *insecure,
-			KeyLogWriter:       keyLog,
-		},
-		QuicConfig: &qconf,
-	}
-	defer roundTripper.Close()
-	hclient := &http.Client{
-		Transport: roundTripper,
+		log.Fatalf("unable to create http request due to error %s", err)
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(len(urls))
-	for _, addr := range urls {
-		logger.Infof("GET %s", addr)
-		go func(addr string) {
-			rsp, err := hclient.Get(addr)
-			if err != nil {
-				log.Fatal(err)
-			}
-			logger.Infof("Got response for %s: %#v", addr, rsp)
-
-			body := &bytes.Buffer{}
-			_, err = io.Copy(body, rsp.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if *quiet {
-				logger.Infof("Response Body: %d bytes", body.Len())
-			} else {
-				logger.Infof("Response Body:")
-				logger.Infof("%s", body.Bytes())
-			}
-			wg.Done()
-		}(addr)
+	resp, err := client.Do(req)
+	if err != nil {
+		switch e := err.(type) {
+		case *url.Error:
+			log.Fatalf("url.Error received on http request: %s", e)
+		default:
+			log.Fatalf("Unexpected error received: %s", err)
+		}
 	}
-	wg.Wait()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Fatalf("unexpected error reading response body: %s", err)
+	}
+
+	fmt.Printf("\nResponse from server: \n\tHTTP status: %s\n\tBody: %s\n", resp.Status, body)
 }
