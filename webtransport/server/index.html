@@ -51,13 +51,14 @@
     const sendButton = document.querySelector('#send');
     const sendInput = document.querySelector('#data');
     let currentTransport;
+    let streamNumber;
 
     window.onload = async () => {
       try {
         var transport = new WebTransport("https://localhost:5059/echo", {
           "serverCertificateHashes": [{
             "algorithm": "sha-256",
-            "value": new Uint8Array(%% CERTHASH %%)
+            "value": new Uint8Array(%%CERTHASH%%)
           }]
         });
         addToEventLog("Initiating connection...");
@@ -76,19 +77,19 @@
       }
 
       currentTransport = transport;
+      streamNumber = 1;
     }
     async function sendData() {
       let encoder = new TextEncoder("utf-8");
-      let rawData = sendInput.value;
+      let rawData = sendInput.value + '\n';
       let data = encoder.encode(rawData);
       let transport = currentTransport;
       try {
         let stream = await transport.createBidirectionalStream();
-        let number = streamNumber++;
-        readFromIncomingStream(stream, number);
-
         let writer = stream.writable.getWriter();
         await writer.write(data);
+        let number = streamNumber++;
+        readFromIncomingStream(stream, number);
         await writer.close();
         addToEventLog(
           "Opened bidirectional stream #" + number +
@@ -96,6 +97,28 @@
         );
       } catch (e) {
         addToEventLog("Error while sending data: " + e, "error");
+      }
+    }
+
+    async function readFromIncomingStream(stream, number) {
+      let decoder = new TextDecoderStream("utf-8");
+      let reader = stream.readable.pipeThrough(decoder).getReader();
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            addToEventLog("Stream #" + number + " closed");
+            return;
+          }
+          let data = value;
+          addToEventLog("Received data on stream #" + number + ": " + data);
+        }
+      } catch (e) {
+        addToEventLog(
+          "Error while reading from stream #" + number + ": " + e,
+          "error",
+        );
+        addToEventLog("    " + e.message);
       }
     }
 
