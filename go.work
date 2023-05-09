@@ -1,6 +1,11 @@
 go 1.20
 
 use (
+	./http3
 	./https
+	./quic
+	./tcp
+	./tls
 	./utils
+	./webtransport
 )
