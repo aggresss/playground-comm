@@ -6,6 +6,7 @@ use (
 	./quic
 	./tcp
 	./tls
+	./udp
 	./utils
 	./webtransport
 )
