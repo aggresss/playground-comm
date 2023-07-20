@@ -51,15 +51,16 @@ func handleConnection(conn quic.Connection) {
 	fmt.Printf("accept new connection, remote: %s\n", conn.RemoteAddr().String())
 
 	go func() {
-		message, err := conn.ReceiveMessage()
-		if err != nil {
-			fmt.Println("failed to receive message, err:", err)
-			return
-		}
-
-		fmt.Printf("receive message: %s", string(message))
-
 		defer conn.CloseWithError(quic.ApplicationErrorCode(quic.NoError), "")
+
+		for {
+			message, err := conn.ReceiveMessage()
+			if err != nil {
+				fmt.Println("failed to receive message, err:", err)
+				break
+			}
+			fmt.Printf("receive message: %s", string(message))
+		}
 	}()
 
 	go func() {
