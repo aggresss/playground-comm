@@ -24,7 +24,9 @@ func main() {
 	}
 	tlsConfig.NextProtos = []string{NEXTPROTO}
 
-	quicConfig := &quic.Config{}
+	quicConfig := &quic.Config{
+		EnableDatagrams: true,
+	}
 
 	listener, err := quic.ListenAddr(ADDR, tlsConfig, quicConfig)
 	if err != nil {
@@ -41,23 +43,37 @@ func main() {
 			continue
 		}
 
-		go handleConnection(conn)
+		handleConnection(conn)
 	}
 }
 
 func handleConnection(conn quic.Connection) {
 	fmt.Printf("accept new connection, remote: %s\n", conn.RemoteAddr().String())
-	defer conn.CloseWithError(quic.ApplicationErrorCode(quic.NoError), "")
-	for {
-		stream, err := conn.AcceptStream(context.Background())
+
+	go func() {
+		message, err := conn.ReceiveMessage()
 		if err != nil {
-			fmt.Println("failed to accept stream, err:", err)
+			fmt.Println("failed to receive message, err:", err)
 			return
 		}
-		fmt.Printf("accept new stream, remote: %s, streamID: %x\n", conn.RemoteAddr().String(), stream.StreamID())
 
-		go handleStream(stream)
-	}
+		fmt.Printf("receive message: %s", string(message))
+
+		defer conn.CloseWithError(quic.ApplicationErrorCode(quic.NoError), "")
+	}()
+
+	go func() {
+		for {
+			stream, err := conn.AcceptStream(context.Background())
+			if err != nil {
+				fmt.Println("failed to accept stream, err:", err)
+				return
+			}
+			fmt.Printf("accept new stream, remote: %s, streamID: %x\n", conn.RemoteAddr().String(), stream.StreamID())
+
+			go handleStream(stream)
+		}
+	}()
 }
 
 func handleStream(stream quic.Stream) {

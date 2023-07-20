@@ -35,7 +35,9 @@ func main() {
 		NextProtos:         []string{NEXTPROTO},
 	}
 
-	quicConfig := &quic.Config{}
+	quicConfig := &quic.Config{
+		EnableDatagrams: true,
+	}
 
 	conn, err := quic.DialAddr(context.Background(), quicServer.String(), tlsConf, quicConfig)
 	if err != nil {
@@ -69,6 +71,12 @@ func main() {
 				fmt.Println("Write data failed:", err.Error())
 				os.Exit(1)
 			}
+
+			err = conn.SendMessage([]byte(text))
+			if err != nil {
+				fmt.Println("Send message failed:", err.Error())
+			}
+
 			fmt.Printf("send: %s", text)
 
 			bytes, err := readerStream.ReadBytes(byte('\n'))
