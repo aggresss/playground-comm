@@ -54,7 +54,7 @@ func handleConnection(conn quic.Connection) {
 		defer conn.CloseWithError(quic.ApplicationErrorCode(quic.NoError), "")
 
 		for {
-			message, err := conn.ReceiveMessage()
+			message, err := conn.ReceiveMessage(context.Background())
 			if err != nil {
 				fmt.Println("failed to receive message, err:", err)
 				break
