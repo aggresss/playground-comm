@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"time"
 
 	"github.com/quic-go/quic-go"
@@ -26,6 +27,10 @@ func main() {
 
 	quicConfig := &quic.Config{
 		EnableDatagrams: true,
+		RequireAddressValidation: func(a net.Addr) bool {
+			fmt.Println("validating address:", a.String())
+			return true
+		},
 	}
 
 	listener, err := quic.ListenAddr(ADDR, tlsConfig, quicConfig)

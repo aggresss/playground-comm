@@ -9,7 +9,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"syscall"
 
 	"github.com/quic-go/quic-go"
 )
@@ -19,11 +18,19 @@ const (
 	PORT      = "5059"
 	TYPE      = "tcp"
 	NEXTPROTO = "quic-echo-example"
+	KEYLOG    = "key.log"
 )
 
 const message = "foobar\n"
 
 func main() {
+	keyLog, err := os.OpenFile(KEYLOG, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not open %s\n", KEYLOG)
+		os.Exit(1)
+	}
+	defer keyLog.Close()
+
 	quicServer, err := net.ResolveTCPAddr(TYPE, HOST+":"+PORT)
 	if err != nil {
 		fmt.Println("ResolveTCPAddr failed:", err.Error())
@@ -33,6 +40,7 @@ func main() {
 	tlsConf := &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         []string{NEXTPROTO},
+		KeyLogWriter:       keyLog,
 	}
 
 	quicConfig := &quic.Config{
@@ -52,7 +60,7 @@ func main() {
 	}
 
 	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(ch, os.Interrupt)
 
 	readerStream := bufio.NewReader(stream)
 	readerStdin := bufio.NewReader(os.Stdin)
