@@ -24,7 +24,7 @@ const (
 const message = "foobar\n"
 
 func main() {
-	keyLog, err := os.OpenFile(KEYLOG, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	keyLog, err := os.OpenFile(KEYLOG, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not open %s\n", KEYLOG)
 		os.Exit(1)
