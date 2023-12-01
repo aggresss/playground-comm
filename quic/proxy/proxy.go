@@ -60,9 +60,9 @@ func handleConnection(tcpConn net.Conn) {
 	errSignal := make(chan error, 1)
 	go pipe(quicStream, tcpConn, errSignal)
 	go pipe(tcpConn, quicStream, errSignal)
-	fmt.Printf("start proxy tcp://%s to quic://%s", tcpConn.RemoteAddr().String(), forwardAddress)
+	fmt.Printf("start proxy tcp://%s to quic://%s\n", tcpConn.RemoteAddr().String(), forwardAddress)
 	for err := range errSignal {
-		fmt.Printf("stop proxy tcp://%s to quic://%s, reason: %s",
+		fmt.Printf("stop proxy tcp://%s to quic://%s, reason: %s\n",
 			tcpConn.RemoteAddr().String(), forwardAddress, err.Error())
 		return
 	}

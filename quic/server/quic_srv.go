@@ -14,8 +14,11 @@ import (
 )
 
 const (
-	ADDR      = ":5059"
-	NEXTPROTO = "quic-echo-example"
+	ADDR = ":5059"
+)
+
+var (
+	NextProtos = []string{"quic-echo-example"}
 )
 
 func main() {
@@ -23,7 +26,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	tlsConfig.NextProtos = []string{NEXTPROTO}
+	tlsConfig.NextProtos = NextProtos
 
 	quicConfig := &quic.Config{
 		EnableDatagrams: true,
