@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	HOST = "localhost"
-	PORT = "5059"
-	TYPE = "tcp"
+	HOST   = "localhost"
+	PORT   = "5059"
+	TYPE   = "tcp"
+	KEYLOG = "key.log"
 )
 
 func main() {
@@ -22,8 +23,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	keyLog, err := os.OpenFile(KEYLOG, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not open %s\n", KEYLOG)
+		os.Exit(1)
+	}
+	defer keyLog.Close()
+
 	conf := &tls.Config{
 		InsecureSkipVerify: true,
+		KeyLogWriter:       keyLog,
 	}
 
 	conn, err := tls.Dial(TYPE, tlsServer.String(), conf)
