@@ -17,11 +17,9 @@ const (
 	HOST      = "localhost"
 	PORT      = "5059"
 	TYPE      = "tcp"
-	NEXTPROTO = "quic-echo-example"
+	NEXTPROTO = "sample"
 	KEYLOG    = "key.log"
 )
-
-const message = "foobar\n"
 
 func main() {
 	keyLog, err := os.OpenFile(KEYLOG, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
@@ -44,7 +42,8 @@ func main() {
 	}
 
 	quicConfig := &quic.Config{
-		EnableDatagrams: true,
+		EnableDatagrams:       true,
+		Disable1RTTEncryption: true,
 	}
 
 	conn, err := quic.DialAddr(context.Background(), quicServer.String(), tlsConf, quicConfig)
@@ -78,11 +77,6 @@ func main() {
 			if err != nil {
 				fmt.Println("Write data failed:", err.Error())
 				os.Exit(1)
-			}
-
-			err = conn.SendMessage([]byte(text))
-			if err != nil {
-				fmt.Println("Send message failed:", err.Error())
 			}
 
 			fmt.Printf("send: %s", text)

@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net"
 	"time"
 
 	"github.com/quic-go/quic-go"
@@ -18,7 +17,7 @@ const (
 )
 
 var (
-	NextProtos = []string{"quic-echo-example"}
+	NextProtos = []string{"sample"}
 )
 
 func main() {
@@ -29,11 +28,8 @@ func main() {
 	tlsConfig.NextProtos = NextProtos
 
 	quicConfig := &quic.Config{
-		EnableDatagrams: true,
-		RequireAddressValidation: func(a net.Addr) bool {
-			fmt.Println("validating address:", a.String())
-			return true
-		},
+		EnableDatagrams:       true,
+		Disable1RTTEncryption: true,
 	}
 
 	listener, err := quic.ListenAddr(ADDR, tlsConfig, quicConfig)
@@ -57,19 +53,6 @@ func main() {
 
 func handleConnection(conn quic.Connection) {
 	fmt.Printf("accept new connection, remote: %s\n", conn.RemoteAddr().String())
-
-	go func() {
-		defer conn.CloseWithError(quic.ApplicationErrorCode(quic.NoError), "")
-
-		for {
-			message, err := conn.ReceiveMessage(context.Background())
-			if err != nil {
-				fmt.Println("failed to receive message, err:", err)
-				break
-			}
-			fmt.Printf("receive message: %s", string(message))
-		}
-	}()
 
 	go func() {
 		for {
