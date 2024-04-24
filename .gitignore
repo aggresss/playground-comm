@@ -29,3 +29,7 @@
 
 # tmp
 tmp/
+
+# Added by cargo
+
+/target
