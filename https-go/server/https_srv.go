@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aggresss/playground-comm/utils"
+	"github.com/aggresss/playground-comm/utils-go"
 )
 
 const (

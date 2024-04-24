@@ -1,4 +1,4 @@
-module github.com/aggresss/playground-comm/tls
+module github.com/aggresss/playground-comm/tls-go
 
 go 1.20
 

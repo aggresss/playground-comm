@@ -1,9 +1,9 @@
-module github.com/aggresss/playground-comm/webtransport
+module github.com/aggresss/playground-comm/webtransport-go
 
 go 1.20
 
 require (
-	github.com/aggresss/playground-comm/utils v0.0.0-20230509081339-868c886cf784
+	github.com/aggresss/playground-comm/utils-go v0.0.0-20230509081339-868c886cf784
 	github.com/quic-go/quic-go v0.36.2
 	github.com/quic-go/webtransport-go v0.5.3
 )

@@ -1,4 +1,4 @@
-module github.com/aggresss/playground-comm/https
+module github.com/aggresss/playground-comm/https-go
 
 go 1.20
 

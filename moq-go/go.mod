@@ -1,4 +1,4 @@
-module github.com/aggresss/playground-comm/moq
+module github.com/aggresss/playground-comm/moq-go
 
 go 1.22.0
 

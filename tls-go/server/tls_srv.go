@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/aggresss/playground-comm/utils"
+	"github.com/aggresss/playground-comm/utils-go"
 )
 
 func main() {

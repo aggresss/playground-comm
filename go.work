@@ -1,13 +1,13 @@
 go 1.22.0
 
 use (
-	./http3
-	./https
-	./moq
-	./quic
-	./tcp
-	./tls
-	./udp
-	./utils
-	./webtransport
+	./http3-go
+	./https-go
+	./moq-go
+	./quic-go
+	./tcp-go
+	./tls-go
+	./udp-go
+	./utils-go
+	./webtransport-go
 )
