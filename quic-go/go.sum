@@ -1,5 +1,7 @@
 github.com/aggresss/playground-comm/utils v0.0.0-20230509081339-868c886cf784 h1:QrjjCBN9nlmqFub1Kdwxbxun8Tub/HwRHqpy/6ZsYTw=
 github.com/aggresss/playground-comm/utils v0.0.0-20230509081339-868c886cf784/go.mod h1:8liTkaU/P4QBQprYVHgfNawVXyj8JSCeu3ZhzSG/ClI=
+github.com/aggresss/playground-comm/utils-go v0.0.0-20240424110501-a2b500e7f002 h1:0WGCA7Ew1EAa3O849zo+8Tq5NrZCTxY6Rk9fbAGMRNM=
+github.com/aggresss/playground-comm/utils-go v0.0.0-20240424110501-a2b500e7f002/go.mod h1:H70I7GHwCXao7GlQRXzEPeyrvU0Q8f07k9PqIN+eZQg=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
